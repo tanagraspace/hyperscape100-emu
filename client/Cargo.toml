@@ -1,0 +1,12 @@
+[package]
+name = "hs100-client"
+version = "0.1.0"
+edition = "2021"
+description = "Interactive TUI client for the HyperScape100 emulator"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+ratatui-image = "4"
+image = "0.25"
+clap = { version = "4", features = ["derive"] }

@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Configure
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=ON
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure --output-junit test-results.xml
+
+      - name: Coverage
+        run: |
+          sudo apt-get install -y lcov
+          cd build
+          lcov --capture --directory . --output-file coverage.info --ignore-errors source
+          lcov --remove coverage.info '*/tests/*' --output-file coverage.info
+          lcov --list coverage.info
+
+      - name: Generate HTML report
+        run: |
+          cd build
+          genhtml coverage.info --output-directory coverage-html
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f build/test-results.xml ]; then
+            total=$(grep -cE 'status="(run|fail)"' build/test-results.xml || true)
+            failures=$(grep -c 'status="fail"' build/test-results.xml || true)
+            total=${total:-0}
+            failures=${failures:-0}
+            passed=$((total - failures))
+            if [ "$failures" = "0" ]; then
+              echo "✅ **$passed/$total suites passed**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **$passed/$total suites passed ($failures failed)**" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Suite | Result | Duration |" >> $GITHUB_STEP_SUMMARY
+            echo "|-------|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            grep -E '<testcase ' build/test-results.xml | while IFS= read -r line; do
+              name=$(echo "$line" | sed 's/.*name="\([^"]*\)".*/\1/')
+              time=$(echo "$line" | sed 's/.*time="\([^"]*\)".*/\1/')
+              status=$(echo "$line" | sed 's/.*status="\([^"]*\)".*/\1/')
+              if [ "$status" = "run" ]; then
+                echo "| $name | ✅ Passed | ${time}s |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| $name | ❌ Failed | ${time}s |" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          else
+            echo "⚠️ No test results found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f build/coverage.info ]; then
+            summary=$(lcov --summary build/coverage.info 2>&1 | grep -E 'lines|functions')
+            lines_pct=$(echo "$summary" | grep 'lines' | grep -o '[0-9.]*%')
+            func_pct=$(echo "$summary" | grep 'functions' | grep -o '[0-9.]*%')
+            echo "| Metric | Coverage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Lines | $lines_pct |" >> $GITHUB_STEP_SUMMARY
+            echo "| Functions | $func_pct |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No coverage data found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: build/test-results.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-report
+          path: build/coverage.info
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-html
+          path: build/coverage-html/
