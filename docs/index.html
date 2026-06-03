@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperScape100 Emulator — Tanagra Space</title>
+  <meta name="description" content="ICD-compliant emulator for the Simera Sense HyperScape100 hyperspectral imager. Streams session data over TCP, simulating LVDS data and I2C/SPI control interfaces for development without hardware.">
+  <meta name="keywords" content="HyperScape100, Simera Sense, hyperspectral, emulator, CubeSat, satellite, ICD, xScape100, CMV12000, LVDS, TCP, TUI">
+  <meta name="author" content="Tanagra Space">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://tanagraspace.com/hyperscape100-emu/">
+  <meta property="og:title" content="HyperScape100 Emulator">
+  <meta property="og:description" content="ICD-compliant emulator for the Simera Sense HyperScape100 hyperspectral imager with interactive TUI client.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tanagraspace.com/hyperscape100-emu/">
+  <meta property="og:site_name" content="Tanagra Space">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HyperScape100 Emulator">
+  <meta name="twitter:description" content="ICD-compliant emulator for the Simera Sense HyperScape100 hyperspectral imager with interactive TUI client.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif; line-height: 1.5; background-color: #e8d5b7; color: #000; }
+    .hero { position: relative; background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('assets/mina-zaldivar.jpg'); background-size: cover; background-position: center; min-height: 340px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; }
+    .hero h1 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
+    .hero-label { position: absolute; bottom: 10px; right: 12px; color: rgba(255,255,255,0.55); font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 3px; }
+    .hero p { color: #fff; font-size: 1.15rem; max-width: 650px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
+    .content { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #000; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid #fc3a52; padding-bottom: 0.5rem; }
+    a { color: #e3344a; text-decoration: none; }
+    a:hover { color: #ea6777; }
+    a:visited { color: #aa2738; }
+    ul { padding-left: 1.5rem; }
+    li { margin-bottom: 0.5em; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 1em; border-radius: 4px; overflow-x: auto; font-size: 0.85em; margin: 1em 0; }
+    pre .comment { color: #6a9955; }
+    pre .cmd { color: #dcdcaa; }
+    code { font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace; font-size: 0.9em; }
+    .flow { margin: 1em 0; font-size: 0.95rem; padding-left: 1.2rem; }
+    .flow li { margin-bottom: 0.6em; padding-left: 0.3rem; }
+    .flow strong { color: #333; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .feature { background: #ddd0ba; padding: 1rem; border-radius: 4px; border: 1px solid #baaa92; }
+    .feature h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+    .feature p { font-size: 0.9rem; margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+    table th { background: #c9b89a; text-align: left; padding: 0.5em 0.75em; border-bottom: 2px solid #baaa92; }
+    table td { padding: 0.4em 0.75em; border-bottom: 1px solid #d4c5ad; }
+    table tr:last-child td { border-bottom: none; }
+    table .pkt-id { font-family: monospace; color: #e3344a; font-weight: bold; font-size: 0.95em; }
+    table .indent td { padding-left: 2em; }
+    table .separator td { padding: 0.1em; border-bottom: none; }
+
+    /* Spectrum animation */
+    .spectrum { display: flex; align-items: flex-end; justify-content: center; gap: 2px; margin: 0.75rem 0 1.5rem 0; height: 40px; }
+    .spectrum .bar { width: 8px; border-radius: 2px 2px 0 0; animation: pulse 2s ease-in-out infinite; }
+    .spectrum .bar:nth-child(1)  { background: #4400aa; height: 60%; animation-delay: 0.0s; }
+    .spectrum .bar:nth-child(2)  { background: #0000ff; height: 70%; animation-delay: 0.1s; }
+    .spectrum .bar:nth-child(3)  { background: #0066ff; height: 80%; animation-delay: 0.2s; }
+    .spectrum .bar:nth-child(4)  { background: #00aaff; height: 75%; animation-delay: 0.3s; }
+    .spectrum .bar:nth-child(5)  { background: #00ccaa; height: 65%; animation-delay: 0.4s; }
+    .spectrum .bar:nth-child(6)  { background: #00dd44; height: 85%; animation-delay: 0.5s; }
+    .spectrum .bar:nth-child(7)  { background: #44ee00; height: 90%; animation-delay: 0.6s; }
+    .spectrum .bar:nth-child(8)  { background: #88ee00; height: 70%; animation-delay: 0.7s; }
+    .spectrum .bar:nth-child(9)  { background: #ccdd00; height: 60%; animation-delay: 0.8s; }
+    .spectrum .bar:nth-child(10) { background: #ffaa00; height: 75%; animation-delay: 0.9s; }
+    .spectrum .bar:nth-child(11) { background: #ff6600; height: 80%; animation-delay: 1.0s; }
+    .spectrum .bar:nth-child(12) { background: #ff3300; height: 65%; animation-delay: 1.1s; }
+    .spectrum .bar:nth-child(13) { background: #cc0000; height: 55%; animation-delay: 1.2s; }
+    @keyframes pulse { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.6); } }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <h1>HyperScape100 Emulator</h1>
+    <div class="spectrum">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+    <p>Emulator for the Simera Sense HyperScape100 hyperspectral imager.</p>
+    <span class="hero-label">Mina Zaldívar, Chile (24.19°S, 69.06°W) — Wyvern Dragonette-002, CC BY 4.0</span>
+  </header>
+
+  <div class="content">
+    <p>The <a href="https://github.com/tanagraspace/hyperscape100-emu">HyperScape100 Emulator</a> streams ICD-compliant session data over TCP, simulating the LVDS data interface and I2C/SPI control interface for development without hardware. It includes an interactive TUI client for visualizing the data stream in real time.</p>
+
+    <h2>HyperScape100</h2>
+    <p>The <a href="https://simera-sense.com/products/hyperscape100/">HyperScape100</a> is a hyperspectral pushbroom imager built by <a href="https://simera-sense.com/">Simera Sense</a> for CubeSat and small satellite platforms. It captures up to 32 spectral bands across the visible and near-infrared range using a CMV12000 sensor with a linear variable filter. Missions flying the HyperScape100 include the <a href="https://wyvern.space/">Wyvern</a> Dragonette constellation, <a href="https://www.trlspace.com/satellite-programs/trollng/">TRL Space TROLL</a>, <a href="https://www.eoportal.org/satellite-missions/xcube">Xplore XCUBE</a>, and ESA's upcoming <a href="https://opssat.esa.int/missions/volt">OPS-SAT VOLT</a>.</p>
+
+    <h2>How the Emulator Works</h2>
+    <p>The emulator reads pre-converted scene data from disk and streams it as ICD-compliant packets over two TCP ports:</p>
+    <ol class="flow">
+      <li><strong>Scene data</strong> is loaded line-by-line from disk. No full-scene buffering, works with multi-GB scenes.</li>
+      <li>Each line is wrapped in ICD packet framing with headers, CRC-32 footers, and interleaved telemetry.</li>
+      <li>The packet stream is sent over <strong>TCP :4001</strong> (data port) to your application.</li>
+      <li>Your application sends band reconfiguration or scene navigation commands back via <strong>TCP :4002</strong> (control port).</li>
+      <li>The emulator responds with a new session using the updated configuration.</li>
+    </ol>
+
+    <h2>Features</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <h3>ICD-Compliant Packets</h3>
+        <p>All packet structs verified against the xScape Control and Data ICD. CRC-32 validated against ICD test vectors.</p>
+      </div>
+      <div class="feature">
+        <h3>Streaming Server</h3>
+        <p>Streams line-by-line from disk over TCP. No full-scene buffering. Works with multi-GB scenes.</p>
+      </div>
+      <div class="feature">
+        <h3>Band Reconfiguration</h3>
+        <p>Select which spectral bands to stream via the control port. Toggle individual bands on/off interactively.</p>
+      </div>
+      <div class="feature">
+        <h3>Multi-Scene</h3>
+        <p>Load a directory of scenes and navigate between them. Cycle through different locations and conditions.</p>
+      </div>
+      <div class="feature">
+        <h3>Interactive TUI Client</h3>
+        <p>Ratatui-based terminal UI with false-color scene preview, zoom/pan/rotate, live packet stats, and band selector.</p>
+      </div>
+      <div class="feature">
+        <h3>Thoroughly Tested</h3>
+        <p>Comprehensive test coverage. Packet format, CRC-32, serialization round-trips, TCP streaming.</p>
+      </div>
+    </div>
+
+    <h2>Session Stream</h2>
+    <p>The emulator produces the exact packet stream defined by the xScape Control and Data ICD (doc 051715):</p>
+    <table>
+      <tr><th>Packet</th><th>ID</th><th>Contains</th></tr>
+      <tr><td>SESSION START</td><td class="pkt-id">0x00</td><td>Session ID, platform/instrument IDs</td></tr>
+      <tr><td>IMAGER INFORMATION</td><td class="pkt-id">0xA0</td><td>Product ID, serial, firmware version</td></tr>
+      <tr><td>IMAGER CONFIGURATION</td><td class="pkt-id">0xA1</td><td>Band wavelengths, TDI stages, line period</td></tr>
+      <tr><td>TIME SYNCHRONISATION</td><td class="pkt-id">0x07</td><td>Imager-to-platform time correlation</td></tr>
+      <tr><td>SCENE START</td><td class="pkt-id">0x02</td><td>Scene type, width, height</td></tr>
+      <tr class="indent"><td>IMAGER TELEMETRY</td><td class="pkt-id">0xA3</td><td>Sensor temperature (every 500ms)</td></tr>
+      <tr class="indent"><td>EXPOSURE START</td><td class="pkt-id">0x03</td><td>Timestamp (one per line)</td></tr>
+      <tr class="indent"><td>LINE DATA</td><td class="pkt-id">0x04</td><td>Pixel data (one per band per line)</td></tr>
+      <tr><td>IMAGER TELEMETRY</td><td class="pkt-id">0xA3</td><td>Final telemetry</td></tr>
+      <tr><td>SESSION END</td><td class="pkt-id">0x01</td><td>Session ID</td></tr>
+    </table>
+
+    <h2>TUI Client</h2>
+    <p>The included terminal client is a convenient demo of how to interact with the emulator. It connects to the TCP ports, parses the ICD packet stream in real time, and renders a false-color scene preview with live stats. Use it as a reference for building your own integration.</p>
+    <p style="text-align: center; margin: 1.5em 0;">
+      <img src="assets/hyperscape100-client-demo.gif" alt="HyperScape100 TUI Client Demo" style="max-width: 100%; border-radius: 8px;">
+    </p>
+
+    <h2>Integrating with the Emulator</h2>
+    <p>To build software that consumes the HyperScape100 data stream:</p>
+    <ol style="padding-left: 1.5rem; margin: 1em 0;">
+      <li>Connect to the data port (default 4001) via TCP.</li>
+      <li>Scan for the sync word <code>0x5353</code> to find packet boundaries.</li>
+      <li>Parse the 8-byte header to get the packet ID and payload length.</li>
+      <li>Validate the CRC-32 footer (zlib-compatible).</li>
+      <li>Process packets by ID using the session stream format above.</li>
+      <li>Reassemble spectral data. Each LINE DATA packet contains one band for one line.</li>
+    </ol>
+    <p>To reconfigure bands, connect to the control port (default 4002) and send <code>RCFG</code> + band count + wavelengths. To switch scenes, send <code>NSCN</code> + direction. The <code>src/packets/</code> library provides ready-to-use C functions for packet parsing and serialization.</p>
+
+    <h2>Scene Data</h2>
+    <p>The recommended data source is the <a href="https://wyvern.space/open-data/">Wyvern Open Data Program</a>, which provides free hyperspectral imagery from the same HyperScape100 sensor under CC BY 4.0. A Python converter transforms GeoTIFFs to the emulator's raw format, producing data as it would come from the camera hardware.</p>
+
+    <h2>Quick Start</h2>
+    <pre><code><span class="comment"># Build</span>
+<span class="cmd">mkdir</span> build && <span class="cmd">cd</span> build && <span class="cmd">cmake</span> .. && <span class="cmd">make</span>
+
+<span class="comment"># Convert scene data</span>
+<span class="cmd">pip</span> install -r tools/requirements.txt
+<span class="cmd">python</span> tools/convert.py path/to/scene.tiff -o data/
+
+<span class="comment"># Terminal 1: start emulator</span>
+./build/<span class="cmd">emu</span> --scene data/
+
+<span class="comment"># Terminal 2: start TUI client</span>
+<span class="cmd">cd</span> client && <span class="cmd">cargo</span> run --release</code></pre>
+
+    <h2>Resources</h2>
+    <ul>
+      <li><a href="https://github.com/tanagraspace/hyperscape100-emu">GitHub Repository</a></li>
+      <li><a href="https://simera-sense.com/products/hyperscape100/">Simera Sense HyperScape100</a></li>
+      <li><a href="https://wyvern.space/open-data/">Wyvern Open Data Program</a></li>
+      <li><a href="https://github.com/tanagraspace/hyperscape100-emu/blob/main/LICENSE">MIT License</a></li>
+    </ul>
+  </div>
+</body>
+</html>
