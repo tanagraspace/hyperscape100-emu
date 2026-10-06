@@ -32,42 +32,23 @@
   <meta name="twitter:image" content="https://tanagraspace.com/hyperscape100-emu/assets/og-image.png">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="icon" type="image/png" href="assets/favicon.png">
+  <meta name="theme-color" content="#161616">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Nunito+Sans:opsz,wght@6..12,300..800&display=swap">
+  <link rel="stylesheet" href="assets/tanagra.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif; line-height: 1.5; background-color: #e8d5b7; color: #000; }
-    .hero { position: relative; background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('assets/mina-zaldivar.jpg'); background-size: cover; background-position: center; min-height: 340px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; }
-    .hero h1 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
-    .hero-label { position: absolute; bottom: 10px; right: 12px; color: rgba(255,255,255,0.55); font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 3px; }
-    .hero p { color: #fff; font-size: 1.15rem; max-width: 650px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
-    .content { max-width: 800px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #000; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid #fc3a52; padding-bottom: 0.5rem; }
-    a { color: #e3344a; text-decoration: none; }
-    a:hover { color: #ea6777; }
-    a:visited { color: #aa2738; }
-    ul { padding-left: 1.5rem; }
-    li { margin-bottom: 0.5em; }
-    pre { background: #1e1e1e; color: #d4d4d4; padding: 1em; border-radius: 4px; overflow-x: auto; font-size: 0.85em; margin: 1em 0; }
-    pre .comment { color: #6a9955; }
-    pre .cmd { color: #dcdcaa; }
-    code { font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace; font-size: 0.9em; }
-    .flow { margin: 1em 0; font-size: 0.95rem; padding-left: 1.2rem; }
+    .hero { background-image: url('assets/mina-zaldivar.jpg'); }
+    .flow { margin: 1em 0; padding-left: 1.2rem; }
     .flow li { margin-bottom: 0.6em; padding-left: 0.3rem; }
-    .flow strong { color: #333; }
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
-    .feature { background: #ddd0ba; padding: 1rem; border-radius: 4px; border: 1px solid #baaa92; }
-    .feature h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
-    .feature p { font-size: 0.9rem; margin: 0; }
-    table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
-    table th { background: #c9b89a; text-align: left; padding: 0.5em 0.75em; border-bottom: 2px solid #baaa92; }
-    table td { padding: 0.4em 0.75em; border-bottom: 1px solid #d4c5ad; }
-    table tr:last-child td { border-bottom: none; }
-    table .pkt-id { font-family: monospace; color: #e3344a; font-weight: bold; font-size: 0.95em; }
-    table .indent td { padding-left: 2em; }
-    table .separator td { padding: 0.1em; border-bottom: none; }
-
-    /* Spectrum animation */
-    .spectrum { display: flex; align-items: flex-end; justify-content: center; gap: 2px; margin: 0.75rem 0 1.5rem 0; height: 40px; }
-    .spectrum .bar { width: 8px; border-radius: 2px 2px 0 0; animation: pulse 2s ease-in-out infinite; }
+    td.pkt-id { font-family: var(--ts-mono); color: var(--ts-yellow); font-weight: 500; }
+    tr.indent td:first-child { padding-left: 2em; }
+    tr.separator td { padding: 0.1em; border-bottom: none; }
+    .demo-gif { text-align: center; margin: 1.5em 0; }
+    .demo-gif img { border-radius: 10px; border: 1px solid var(--ts-line); }
+    /* spectrum animation: one bar per band, visible to near-infrared */
+    .spectrum { display: flex; align-items: flex-end; justify-content: flex-start; gap: 2px; margin: 1.1rem 0 .3rem 0; height: 40px; }
+    .spectrum .bar { width: 8px; border-radius: 2px 2px 0 0; animation: pulse 2s ease-in-out infinite; transform-origin: bottom; }
     .spectrum .bar:nth-child(1)  { background: #4400aa; height: 60%; animation-delay: 0.0s; }
     .spectrum .bar:nth-child(2)  { background: #0000ff; height: 70%; animation-delay: 0.1s; }
     .spectrum .bar:nth-child(3)  { background: #0066ff; height: 80%; animation-delay: 0.2s; }
@@ -85,16 +66,31 @@
   </style>
 </head>
 <body>
-  <header class="hero">
-    <h1>HyperScape100 Emulator</h1>
-    <div class="spectrum">
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-      <div class="bar"></div>
+  <header class="ts-header">
+    <div class="ts-header__inner">
+      <a class="ts-brand" href="https://tanagraspace.com/"><img src="assets/mark-yellow.svg" alt="" width="22" height="31"><span>Tanagra Space</span></a>
+      <nav aria-label="Main">
+        <ul class="ts-nav">
+          <li><a href="https://tanagraspace.com/#projects">Projects</a></li>
+          <li><a href="https://tanagraspace.com/press/">Press</a></li>
+          <li><a href="https://tanagraspace.com/#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
-    <p>Emulator for the Simera Sense HyperScape100 hyperspectral imager.</p>
+  </header>
+  <header class="hero">
+    <div class="hero__inner">
+      <p class="eyebrow">Open source &middot; MIT licensed</p>
+      <h1>HyperScape100 Emulator</h1>
+      <div class="spectrum">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+      <p>Emulator for the Simera Sense HyperScape100 hyperspectral imager.</p>
+    </div>
     <span class="hero-label">Mina Zaldívar, Chile · Wyvern Dragonette-002 · CC BY 4.0</span>
   </header>
 
@@ -144,6 +140,7 @@
 
     <h2>Session Stream</h2>
     <p>The emulator produces the exact packet stream defined by the xScape Control and Data ICD (doc 051715):</p>
+    <div class="table-wrap">
     <table>
       <tr><th>Packet</th><th>ID</th><th>Contains</th></tr>
       <tr><td>SESSION START</td><td class="pkt-id">0x00</td><td>Session ID, platform/instrument IDs</td></tr>
@@ -157,16 +154,17 @@
       <tr><td>IMAGER TELEMETRY</td><td class="pkt-id">0xA3</td><td>Final telemetry</td></tr>
       <tr><td>SESSION END</td><td class="pkt-id">0x01</td><td>Session ID</td></tr>
     </table>
+    </div>
 
     <h2>TUI Client</h2>
     <p>The included terminal client is a convenient demo of how to interact with the emulator. It connects to the TCP ports, parses the ICD packet stream in real time, and renders a false-color scene preview with live stats. Use it as a reference for building your own integration.</p>
-    <p style="text-align: center; margin: 1.5em 0;">
-      <img src="assets/hyperscape100-client-demo.gif" alt="HyperScape100 TUI Client Demo" style="max-width: 100%; border-radius: 8px;">
+    <p class="demo-gif">
+      <img src="assets/hyperscape100-client-demo.gif" alt="HyperScape100 TUI Client Demo">
     </p>
 
     <h2>Integrating with the Emulator</h2>
     <p>To build software that consumes the HyperScape100 data stream:</p>
-    <ol style="padding-left: 1.5rem; margin: 1em 0;">
+    <ol>
       <li>Connect to the data port (default 4001) via TCP.</li>
       <li>Scan for the sync word <code>0x5353</code> to find packet boundaries.</li>
       <li>Parse the 8-byte header to get the packet ID and payload length.</li>
@@ -201,5 +199,22 @@
       <li><a href="https://github.com/tanagraspace/hyperscape100-emu/blob/main/LICENSE">MIT License</a></li>
     </ul>
   </div>
+  <footer class="ts-footer-wrap">
+    <div>
+      <div class="ts-footer">
+        <div class="ts-footer__brand">
+          <img src="assets/mark-yellow.svg" alt="" width="22" height="31">
+          <div><strong>Tanagra Space</strong><span>Machine learning for autonomous space operations.</span></div>
+        </div>
+        <ul class="ts-footer__links">
+          <li><a href="https://tanagraspace.com/#projects">Projects</a></li>
+          <li><a href="https://tanagraspace.com/press/">Press</a></li>
+          <li><a href="https://tanagraspace.com/#contact">Contact</a></li>
+          <li><a href="https://github.com/tanagraspace/hyperscape100-emu">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="ts-footer__legal">&copy; 2026 Tanagra Space. All rights reserved.</div>
+    </div>
+  </footer>
 </body>
 </html>
