@@ -10,6 +10,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
+use hs100_preview::{channel_for_band, Preview};
 use image::{DynamicImage, ImageBuffer, Rgb};
 use ratatui::{
     prelude::*,
@@ -52,7 +53,7 @@ enum AppMode {
 
 struct App {
     stats: Arc<Mutex<SessionStats>>,
-    scene_image: Arc<Mutex<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>>>,
+    scene_image: Arc<Mutex<Option<Preview>>>,
     should_quit: bool,
     picker: Picker,
     image_state: Option<StatefulProtocol>,
@@ -73,7 +74,7 @@ struct App {
 fn receiver_thread(
     addr: String,
     stats: Arc<Mutex<SessionStats>>,
-    scene_image: Arc<Mutex<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>>>,
+    scene_image: Arc<Mutex<Option<Preview>>>,
 ) {
     {
         let mut s = stats.lock().unwrap();
@@ -132,7 +133,7 @@ fn receiver_thread(
 fn process_packets(
     data: &mut Vec<u8>,
     stats: &Arc<Mutex<SessionStats>>,
-    scene_image: &Arc<Mutex<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>>>,
+    scene_image: &Arc<Mutex<Option<Preview>>>,
 ) {
     let mut pos = 0;
 
@@ -177,16 +178,8 @@ fn process_packets(
 
                         drop(s);
                         // Scale preview to fit, preserving aspect ratio
-                        let max_w: u32 = 800;
-                        let max_h: u32 = 1200;
-                        let aspect = width as f64 / height.max(1) as f64;
-                        let (preview_w, preview_h) = if aspect > max_w as f64 / max_h as f64 {
-                            (max_w, (max_w as f64 / aspect) as u32)
-                        } else {
-                            ((max_h as f64 * aspect) as u32, max_h)
-                        };
                         let mut img = scene_image.lock().unwrap();
-                        *img = Some(ImageBuffer::new(preview_w.max(1), preview_h.max(1)));
+                        *img = Some(Preview::fitted(width as u32, height, 800, 1200));
                         pos += total_len;
                         continue;
                     }
@@ -204,26 +197,20 @@ fn process_packets(
                             s.current_line = line_num + 1;
                         }
 
-                        let width = s.width;
                         let n_bands = s.n_bands;
-                        let scene_height = s.scene_height;
                         drop(s);
 
-                        if n_bands > 0
-                            && (band == 0 || band == n_bands / 2 || band == n_bands - 1)
-                        {
+                        if let Some(channel) = channel_for_band(band, n_bands) {
                             let pixel_start = 12;
                             let pixel_end = payload_len.min(payload.len());
                             if pixel_start < pixel_end {
-                                update_image(
-                                    scene_image,
-                                    &payload[pixel_start..pixel_end],
-                                    line_num,
-                                    scene_height,
-                                    width,
-                                    band,
-                                    n_bands,
-                                );
+                                if let Some(ref mut img) = *scene_image.lock().unwrap() {
+                                    img.put_band_line_le(
+                                        line_num,
+                                        channel,
+                                        &payload[pixel_start..pixel_end],
+                                    );
+                                }
                             }
                         }
 
@@ -259,51 +246,6 @@ fn process_packets(
     }
 
     data.drain(..pos);
-}
-
-fn update_image(
-    scene_image: &Arc<Mutex<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>>>,
-    pixel_data: &[u8],
-    line_num: u32,
-    scene_height: u32,
-    width: u16,
-    band: u8,
-    n_bands: u8,
-) {
-    let mut img_lock = scene_image.lock().unwrap();
-    if let Some(ref mut img) = *img_lock {
-        let img_w = img.width();
-        let img_h = img.height();
-
-        let y = if scene_height > 0 {
-            (line_num as u64 * img_h as u64 / scene_height as u64) as u32
-        } else {
-            line_num
-        };
-        if y >= img_h {
-            return;
-        }
-
-        let channel: usize = if band == 0 {
-            2 // blue
-        } else if band == n_bands / 2 {
-            1 // green
-        } else {
-            0 // red
-        };
-
-        let src_pixels = pixel_data.len() / 2;
-        for x in 0..img_w {
-            let src_x = (x as u64 * width as u64 / img_w as u64) as usize;
-            if src_x < src_pixels && src_x * 2 + 1 < pixel_data.len() {
-                let dn = pixel_data[src_x * 2] as u16
-                    | (pixel_data[src_x * 2 + 1] as u16) << 8;
-                let val = ((dn.min(4095) as f32 / 4095.0) * 255.0) as u8;
-                let pixel = img.get_pixel_mut(x, y);
-                pixel.0[channel] = val;
-            }
-        }
-    }
 }
 
 fn draw_ui(frame: &mut Frame, app: &mut App) {
@@ -524,7 +466,7 @@ fn main() -> io::Result<()> {
     let args = Args::parse();
 
     let stats = Arc::new(Mutex::new(SessionStats::default()));
-    let scene_image: Arc<Mutex<Option<ImageBuffer<Rgb<u8>, Vec<u8>>>>> =
+    let scene_image: Arc<Mutex<Option<Preview>>> =
         Arc::new(Mutex::new(None));
 
     let addr = format!("{}:{}", args.host, args.data_port);
@@ -608,7 +550,14 @@ fn main() -> io::Result<()> {
 
         if app.last_image_update.elapsed() > Duration::from_millis(200) {
             let img_lock = app.scene_image.lock().unwrap();
-            if let Some(ref img) = *img_lock {
+            if let Some(ref preview) = *img_lock {
+                let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_raw(
+                    preview.width(),
+                    preview.height(),
+                    preview.rgb().to_vec(),
+                )
+                .expect("the preview holds width * height * 3 bytes");
+                let img = &img;
                 let iw = img.width();
                 let ih = img.height();
                 let view = if app.zoom > 1.01 {

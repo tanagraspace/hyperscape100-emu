@@ -6,3 +6,4 @@ client/target/
 tests/*
 !tests/*.c
 docs/hyperscape100-client-demo.mov
+preview/target/
