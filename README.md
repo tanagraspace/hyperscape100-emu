@@ -107,6 +107,12 @@ cd build && ctest
 
 94 tests across 8 suites covering packet format compliance, CRC-32, serialization round-trips, session structure, and TCP streaming.
 
+The scene preview crate has its own tests:
+
+```bash
+cargo test --manifest-path preview/Cargo.toml
+```
+
 ## Project structure
 
 ```
@@ -114,6 +120,7 @@ src/
   packets/             ICD packet library (C)
   emu/                 Emulator server (C)
 client/                Interactive TUI client (Rust, see client/README.md)
+preview/               Scene preview library crate (Rust, see preview/README.md)
 tests/                 94 TDD tests (C)
 tools/                 GeoTIFF converter (Python, see tools/README.md)
 data/                  Scene data (see data/README.md)

@@ -1,0 +1,8 @@
+[package]
+name = "hs100-preview"
+version = "0.1.0"
+edition = "2021"
+description = "False-color scene preview of HyperScape100 line data, built line by line"
+license = "MIT"
+
+[dependencies]

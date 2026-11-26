@@ -5,7 +5,7 @@ Interactive terminal client for the HyperScape100 emulator. Connects to the emul
 ## Features
 
 - Live packet parsing with stats (packet counts, CRC validation, data rate)
-- False-color scene preview building line-by-line (R: NIR, G: mid-visible, B: blue)
+- False-color scene preview building line-by-line (R: NIR, G: mid-visible, B: blue), from the `hs100-preview` crate in `../preview`
 - Zoom, pan, and rotate the scene preview
 - Progress bar showing capture progress
 - Band selector: toggle individual spectral bands on/off with scrolling list

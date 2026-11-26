@@ -10,6 +10,18 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  rust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Test the preview crate
+        run: cargo test --manifest-path preview/Cargo.toml
+
+      - name: Build the client
+        run: cargo build --manifest-path client/Cargo.toml
+
   build-and-test:
     runs-on: ubuntu-latest
 

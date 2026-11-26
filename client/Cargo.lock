@@ -579,10 +579,15 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "crossterm",
+ "hs100-preview",
  "image",
  "ratatui",
  "ratatui-image",
 ]
+
+[[package]]
+name = "hs100-preview"
+version = "0.1.0"
 
 [[package]]
 name = "icy_sixel"
